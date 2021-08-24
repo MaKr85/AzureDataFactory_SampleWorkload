@@ -45,7 +45,14 @@
 			{
 				"name": "Execute - Load 01-raw",
 				"type": "ExecutePipeline",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "PopulateDataToCurrentDate",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
@@ -53,6 +60,48 @@
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "PopulateDataToCurrentDate",
+				"type": "SqlServerStoredProcedure",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"storedProcedureName": "[DataLoadSimulation].[PopulateDataToCurrentDate]",
+					"storedProcedureParameters": {
+						"AreDatesPrinted": {
+							"value": "0",
+							"type": "Boolean"
+						},
+						"AverageNumberOfCustomerOrdersPerDay": {
+							"value": "100",
+							"type": "Int32"
+						},
+						"IsSilentMode": {
+							"value": "1",
+							"type": "Boolean"
+						},
+						"SaturdayPercentageOfNormalWorkDay": {
+							"value": "40",
+							"type": "Int32"
+						},
+						"SundayPercentageOfNormalWorkDay": {
+							"value": "20",
+							"type": "Int32"
+						}
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "external_sql",
+					"type": "LinkedServiceReference"
 				}
 			}
 		],
