@@ -1,0 +1,891 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "dp-datafactory-mkr-tst"
+		},
+		"FileStorage_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'FileStorage'"
+		},
+		"dpstoragetstmkr_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'dpstoragetstmkr'"
+		},
+		"CurrencyAPI_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://www.live-rates.com/rates"
+		},
+		"FileStorage_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "\\\\dpstoragetstmkr.file.core.windows.net\\stockdata"
+		},
+		"FileStorage_properties_typeProperties_userId": {
+			"type": "string",
+			"defaultValue": "Azure\\dpstoragetstmkr"
+		},
+		"dp_keyvault_all_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://dp-keyvault-all.vault.azure.net/"
+		},
+		"dpstoragetstmkr_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://dpstoragetstmkr.dfs.core.windows.net"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/CurrencyAPI')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('CurrencyAPI_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DatabricksCSVCleansingCluster')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-6906936265635695.15.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/147eb7a5-1550-417c-aad5-c39c3e264d4d/resourceGroups/Spielwiese/providers/Microsoft.Databricks/workspaces/dp-databricks-all-tst",
+					"newClusterNodeType": "Standard_DS3_v2",
+					"newClusterNumOfWorker": "1:4",
+					"newClusterSparkEnvVars": {
+						"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+					},
+					"newClusterVersion": "7.3.x-scala2.12",
+					"newClusterInitScripts": []
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/FileStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureFileStorage",
+				"typeProperties": {
+					"host": "[parameters('FileStorage_properties_typeProperties_host')]",
+					"userId": "[parameters('FileStorage_properties_typeProperties_userId')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('FileStorage_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dp_keyvault_all')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('dp_keyvault_all_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dpstoragetstmkr')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('dpstoragetstmkr_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('dpstoragetstmkr_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DoCSVCleansing')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "CSVCleaning",
+						"type": "DatabricksNotebook",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebookPath": "/Users/matthias.kramer@areto.de/Cleansing",
+							"baseParameters": {
+								"source": {
+									"value": "@pipeline().parameters.source",
+									"type": "Expression"
+								}
+							},
+							"libraries": [
+								{
+									"pypi": {
+										"package": "datatable==0.11.1"
+									}
+								},
+								{
+									"pypi": {
+										"package": "azure-storage-file-datalake"
+									}
+								}
+							]
+						},
+						"linkedServiceName": {
+							"referenceName": "DatabricksCSVCleansingCluster",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"parameters": {
+					"source": {
+						"type": "string",
+						"defaultValue": "external-sql"
+					}
+				},
+				"folder": {
+					"name": "02-cleansed"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-08-20T06:43:34Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatabricksCSVCleansingCluster')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/metadata_external_sql_Tables2Load')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "external-sql/metadata"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "external-sql_Tables2Load.csv",
+						"folderPath": "99-globalcsv",
+						"fileSystem": "99-metadata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "SchemaName",
+						"type": "String"
+					},
+					{
+						"name": "TableName",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_01_raw_external_sql')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "external-sql/sink"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('external-sql','/',formatDateTime(utcnow(),'yyyy'),'/',formatDateTime(utcnow(),'MM'),'/',formatDateTime(utcnow(),'dd'))",
+							"type": "Expression"
+						},
+						"fileSystem": "01-raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "PurchaseOrderLineID",
+						"type": "String"
+					},
+					{
+						"name": "PurchaseOrderID",
+						"type": "String"
+					},
+					{
+						"name": "StockItemID",
+						"type": "String"
+					},
+					{
+						"name": "OrderedOuters",
+						"type": "String"
+					},
+					{
+						"name": "Description",
+						"type": "String"
+					},
+					{
+						"name": "ReceivedOuters",
+						"type": "String"
+					},
+					{
+						"name": "PackageTypeID",
+						"type": "String"
+					},
+					{
+						"name": "ExpectedUnitPricePerOuter",
+						"type": "String"
+					},
+					{
+						"name": "LastReceiptDate",
+						"type": "String"
+					},
+					{
+						"name": "IsOrderLineFinalized",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedBy",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedWhen",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_MergedStockdata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "stockdata/02a-processed/sink"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat('MergedStockdata.csv')",
+							"type": "Expression"
+						},
+						"folderPath": "stockdata",
+						"fileSystem": "02a-processed"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_exchangerates_01raw')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ExchangeRatesAPI/sink"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@concat('exchangeratesAPI','_',formatDateTime(utcnow(),'yyyy'),'_',formatDateTime(utcnow(),'MM'),'_',formatDateTime(utcnow(),'dd'),'.csv')",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('exchangeratesAPI','/',formatDateTime(utcnow(),'yyyy'),'/',formatDateTime(utcnow(),'MM'),'/',formatDateTime(utcnow(),'dd'))",
+							"type": "Expression"
+						},
+						"fileSystem": "01-raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_stockdata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "stockdata/01-raw/sink"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@concat('stockdata','/',formatDateTime(utcnow(),'yyyy'),'/',formatDateTime(utcnow(),'MM'),'/',formatDateTime(utcnow(),'dd'))",
+							"type": "Expression"
+						},
+						"fileSystem": "01-raw"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Date",
+						"type": "String"
+					},
+					{
+						"name": "Open",
+						"type": "String"
+					},
+					{
+						"name": "High",
+						"type": "String"
+					},
+					{
+						"name": "Low",
+						"type": "String"
+					},
+					{
+						"name": "Close",
+						"type": "String"
+					},
+					{
+						"name": "Volume",
+						"type": "String"
+					},
+					{
+						"name": "OpenInt",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_tmp_stockdata')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "stockdata/01-raw/sink"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "98-temporary"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_02aprocessed')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"directory": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Load DWH/source"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"fileSystem": "02-cleansed"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "LineID",
+						"type": "String"
+					},
+					{
+						"name": "OrderID",
+						"type": "String"
+					},
+					{
+						"name": "ItemID",
+						"type": "String"
+					},
+					{
+						"name": "OrderedOuters",
+						"type": "String"
+					},
+					{
+						"name": "Description",
+						"type": "String"
+					},
+					{
+						"name": "ReceivedOuters",
+						"type": "String"
+					},
+					{
+						"name": "PackageTypeID",
+						"type": "String"
+					},
+					{
+						"name": "ExpectedUnitPricePerOuter",
+						"type": "String"
+					},
+					{
+						"name": "LastReceiptDate",
+						"type": "String"
+					},
+					{
+						"name": "IsOrderLineFinalized",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedBy",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedWhen",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_02cleansed')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"directory": {
+						"type": "string"
+					},
+					"fileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Load DWH/source"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().fileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"fileSystem": "02-cleansed"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "LineID",
+						"type": "String"
+					},
+					{
+						"name": "OrderID",
+						"type": "String"
+					},
+					{
+						"name": "ItemID",
+						"type": "String"
+					},
+					{
+						"name": "OrderedOuters",
+						"type": "String"
+					},
+					{
+						"name": "Description",
+						"type": "String"
+					},
+					{
+						"name": "ReceivedOuters",
+						"type": "String"
+					},
+					{
+						"name": "PackageTypeID",
+						"type": "String"
+					},
+					{
+						"name": "ExpectedUnitPricePerOuter",
+						"type": "String"
+					},
+					{
+						"name": "LastReceiptDate",
+						"type": "String"
+					},
+					{
+						"name": "IsOrderLineFinalized",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedBy",
+						"type": "String"
+					},
+					{
+						"name": "LastEditedWhen",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_PreSQLScript')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"directory": {
+						"type": "string"
+					},
+					"FileName": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Load DWH/source"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().FileName",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"fileSystem": "99-metadata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_csvCleansing_directories')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "CSV Cleansing"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileSystem": "01-raw"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_directories02_cleansed_for_DWH')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Load DWH/Metadata"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "DWH_directories2LoadFrom02-cleansed.csv",
+						"folderPath": "99-globalcsv",
+						"fileSystem": "99-metadata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "directoryName",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_directories02a_processed_for_DWH')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Load DWH/Metadata"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "DWH_directories2LoadFrom02a-processed.csv",
+						"folderPath": "99-globalcsv",
+						"fileSystem": "99-metadata"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "directoryName",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_exchangerates_API')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "CurrencyAPI",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "ExchangeRatesAPI/source"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": "https://www.live-rates.com/rates"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/CurrencyAPI')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_getFiles02_cleansed')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dpstoragetstmkr",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"directory": {
+						"type": "string"
+					}
+				},
+				"folder": {
+					"name": "Load DWH/source"
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@dataset().directory",
+							"type": "Expression"
+						},
+						"fileSystem": "02-cleansed"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dpstoragetstmkr')]"
+			]
+		}
+	]
+}

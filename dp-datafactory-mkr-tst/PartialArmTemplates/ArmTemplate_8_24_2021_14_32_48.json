@@ -1,0 +1,246 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "dp-datafactory-mkr-tst"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Incremental Load DWH')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute Incremetal Load DWH",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "01 Load DWH from 02-cleansed_Inc",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					}
+				],
+				"folder": {
+					"name": "03-DWH/Incremental Load"
+				},
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master_LoadAll')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute LoadLake",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Master_LoadLake",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "If FullLoad",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Execute LoadLake",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@pipeline().parameters.FullLoad",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Execute Incremental Load",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Incremental Load DWH",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Execute Load DWH Full",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Initial Load DWH",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true
+									}
+								}
+							]
+						}
+					}
+				],
+				"parameters": {
+					"FullLoad": {
+						"type": "bool",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "00-Master"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-08-23T12:12:25Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Master_LoadLake')]",
+				"[concat(variables('factoryId'), '/pipelines/Incremental Load DWH')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Master_LoadLake')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute - Load 02-cleansed",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute - Load 01-raw",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Iterate CSV Cleansing",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Execute - Load 02a-processed",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute - Load 02-cleansed",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Master_Load_02a-processed",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Execute - Load 01-raw",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "PopulateDataToCurrentDate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Master_Load_01-raw",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "PopulateDataToCurrentDate",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[DataLoadSimulation].[PopulateDataToCurrentDate]",
+							"storedProcedureParameters": {
+								"AreDatesPrinted": {
+									"value": "0",
+									"type": "Boolean"
+								},
+								"AverageNumberOfCustomerOrdersPerDay": {
+									"value": "100",
+									"type": "Int32"
+								},
+								"IsSilentMode": {
+									"value": "1",
+									"type": "Boolean"
+								},
+								"SaturdayPercentageOfNormalWorkDay": {
+									"value": "40",
+									"type": "Int32"
+								},
+								"SundayPercentageOfNormalWorkDay": {
+									"value": "20",
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "external_sql",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"folder": {
+					"name": "00-Master/01-Submaster"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-08-23T10:30:32Z"
+			},
+			"dependsOn": []
+		}
+	]
+}
