@@ -1,0 +1,21 @@
+{
+	"name": "source_csvCleansing_directories",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "CSV Cleansing"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "01-raw"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

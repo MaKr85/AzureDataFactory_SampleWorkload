@@ -1,0 +1,46 @@
+{
+	"name": "Master_LoadAll",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute LoadLake",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Master_LoadLake",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute Load DWH Full",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute LoadLake",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Initial Load DWH",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "00-Master"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-23T12:12:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

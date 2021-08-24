@@ -1,0 +1,19 @@
+{
+	"name": "source_exchangerates_API",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "CurrencyAPI",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "ExchangeRatesAPI/source"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "https://www.live-rates.com/rates"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

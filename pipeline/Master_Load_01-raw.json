@@ -1,0 +1,52 @@
+{
+	"name": "Master_Load_01-raw",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute - Load externalSQL to 01-raw",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load externalSQL to 01-raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute - Load stockdata to 01-raw",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load stockdata to 01-raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute - Load exchangerates to 01-raw",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Load exchangerates API to 01-raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "00-Master/02-Submaster"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-23T10:52:54Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

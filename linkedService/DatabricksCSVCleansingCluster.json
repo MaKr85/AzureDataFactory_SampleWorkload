@@ -1,0 +1,20 @@
+{
+	"name": "DatabricksCSVCleansingCluster",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-6906936265635695.15.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/147eb7a5-1550-417c-aad5-c39c3e264d4d/resourceGroups/Spielwiese/providers/Microsoft.Databricks/workspaces/dp-databricks-all-tst",
+			"newClusterNodeType": "Standard_DS3_v2",
+			"newClusterNumOfWorker": "1:4",
+			"newClusterSparkEnvVars": {
+				"PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+			},
+			"newClusterVersion": "7.3.x-scala2.12",
+			"newClusterInitScripts": []
+		}
+	}
+}

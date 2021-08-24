@@ -1,0 +1,11 @@
+{
+	"name": "dp_keyvault_all",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://dp-keyvault-all.vault.azure.net/"
+		}
+	}
+}

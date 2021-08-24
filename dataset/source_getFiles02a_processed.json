@@ -1,0 +1,30 @@
+{
+	"name": "source_getFiles02a_processed",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"directory": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "Load DWH/source"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@dataset().directory",
+					"type": "Expression"
+				},
+				"fileSystem": "02a-processed"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

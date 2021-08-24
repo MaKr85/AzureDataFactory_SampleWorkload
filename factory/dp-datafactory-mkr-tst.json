@@ -1,0 +1,9 @@
+{
+	"name": "dp-datafactory-mkr-tst",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "22362638-3a1f-4c63-969e-bb81229c4977",
+		"tenantId": "19e8cc7f-d54e-4a3c-832d-c939fc599ba2"
+	}
+}

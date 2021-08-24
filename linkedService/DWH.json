@@ -1,0 +1,19 @@
+{
+	"name": "DWH",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=dp-sqlsource-all-tst.database.windows.net;Initial Catalog=DWH;User ID=areto-msbi-admin",
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "dp_keyvault_all",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "areto-msbi-admin"
+			}
+		}
+	}
+}

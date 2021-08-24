@@ -1,0 +1,88 @@
+{
+	"name": "sink_01_raw_external_sql",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"FileName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "external-sql/sink"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().FileName",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat('external-sql','/',formatDateTime(utcnow(),'yyyy'),'/',formatDateTime(utcnow(),'MM'),'/',formatDateTime(utcnow(),'dd'))",
+					"type": "Expression"
+				},
+				"fileSystem": "01-raw"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "PurchaseOrderLineID",
+				"type": "String"
+			},
+			{
+				"name": "PurchaseOrderID",
+				"type": "String"
+			},
+			{
+				"name": "StockItemID",
+				"type": "String"
+			},
+			{
+				"name": "OrderedOuters",
+				"type": "String"
+			},
+			{
+				"name": "Description",
+				"type": "String"
+			},
+			{
+				"name": "ReceivedOuters",
+				"type": "String"
+			},
+			{
+				"name": "PackageTypeID",
+				"type": "String"
+			},
+			{
+				"name": "ExpectedUnitPricePerOuter",
+				"type": "String"
+			},
+			{
+				"name": "LastReceiptDate",
+				"type": "String"
+			},
+			{
+				"name": "IsOrderLineFinalized",
+				"type": "String"
+			},
+			{
+				"name": "LastEditedBy",
+				"type": "String"
+			},
+			{
+				"name": "LastEditedWhen",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

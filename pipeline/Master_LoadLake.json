@@ -1,0 +1,66 @@
+{
+	"name": "Master_LoadLake",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute - Load 02-cleansed",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute - Load 01-raw",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Iterate CSV Cleansing",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute - Load 02a-processed",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute - Load 02-cleansed",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Master_Load_02a-processed",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute - Load 01-raw",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Master_Load_01-raw",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "00-Master/01-Submaster"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-23T10:30:32Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

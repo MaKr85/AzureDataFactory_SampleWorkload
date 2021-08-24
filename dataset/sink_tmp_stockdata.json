@@ -1,0 +1,21 @@
+{
+	"name": "sink_tmp_stockdata",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "stockdata/01-raw/sink"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": "98-temporary"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

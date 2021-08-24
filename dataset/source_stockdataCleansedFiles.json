@@ -1,0 +1,22 @@
+{
+	"name": "source_stockdataCleansedFiles",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "stockdata/02a-processed/source"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "stockdata",
+				"fileSystem": "02-cleansed"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

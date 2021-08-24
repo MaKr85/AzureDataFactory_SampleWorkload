@@ -1,0 +1,57 @@
+{
+	"name": "DoCSVCleansing",
+	"properties": {
+		"activities": [
+			{
+				"name": "CSVCleaning",
+				"type": "DatabricksNotebook",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"notebookPath": "/Users/matthias.kramer@areto.de/Cleansing",
+					"baseParameters": {
+						"source": {
+							"value": "@pipeline().parameters.source",
+							"type": "Expression"
+						}
+					},
+					"libraries": [
+						{
+							"pypi": {
+								"package": "datatable==0.11.1"
+							}
+						},
+						{
+							"pypi": {
+								"package": "azure-storage-file-datalake"
+							}
+						}
+					]
+				},
+				"linkedServiceName": {
+					"referenceName": "DatabricksCSVCleansingCluster",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"parameters": {
+			"source": {
+				"type": "string",
+				"defaultValue": "external-sql"
+			}
+		},
+		"folder": {
+			"name": "02-cleansed"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-20T06:43:34Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

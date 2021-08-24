@@ -1,0 +1,26 @@
+{
+	"name": "Master_Load_02-cleansed",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute - CSV Cleansing",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Iterate CSV Cleansing",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "00-Master/02-Submaster"
+		},
+		"annotations": [],
+		"lastPublishTime": "2021-08-23T10:30:31Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

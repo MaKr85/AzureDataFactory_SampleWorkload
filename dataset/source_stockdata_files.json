@@ -1,0 +1,22 @@
+{
+	"name": "source_stockdata_files",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "dpstoragetstmkr",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "stockdata/01-raw/source"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "Stocks.zip",
+				"fileSystem": "98-temporary"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
