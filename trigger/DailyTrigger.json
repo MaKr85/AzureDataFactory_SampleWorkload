@@ -3,7 +3,17 @@
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Started",
-		"pipelines": [],
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "Master_LoadAll",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"FullLoad": false
+				}
+			}
+		],
 		"type": "ScheduleTrigger",
 		"typeProperties": {
 			"recurrence": {
@@ -17,7 +27,7 @@
 						0
 					],
 					"hours": [
-						8
+						7
 					]
 				}
 			}
