@@ -1,0 +1,24 @@
+{
+	"name": "Incremental Load DWH",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute Incremetal Load DWH",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "01 Load DWH from 02-cleansed_Inc",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "03-DWH/Incremental Load"
+		},
+		"annotations": []
+	}
+}

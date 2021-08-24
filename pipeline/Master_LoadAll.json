@@ -16,8 +16,8 @@
 				}
 			},
 			{
-				"name": "Execute Load DWH Full",
-				"type": "ExecutePipeline",
+				"name": "If FullLoad",
+				"type": "IfCondition",
 				"dependsOn": [
 					{
 						"activity": "Execute LoadLake",
@@ -28,14 +28,49 @@
 				],
 				"userProperties": [],
 				"typeProperties": {
-					"pipeline": {
-						"referenceName": "Initial Load DWH",
-						"type": "PipelineReference"
+					"expression": {
+						"value": "@pipeline().parameters.FullLoad",
+						"type": "Expression"
 					},
-					"waitOnCompletion": true
+					"ifFalseActivities": [
+						{
+							"name": "Execute Incremental Load",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Incremental Load DWH",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Execute Load DWH Full",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Initial Load DWH",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true
+							}
+						}
+					]
 				}
 			}
 		],
+		"parameters": {
+			"FullLoad": {
+				"type": "bool",
+				"defaultValue": false
+			}
+		},
 		"folder": {
 			"name": "00-Master"
 		},
