@@ -3,13 +3,33 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Execute Incremetal Load DWH",
+				"name": "Execute Load DWH 02-cleansed",
 				"type": "ExecutePipeline",
 				"dependsOn": [],
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
 						"referenceName": "01 Load DWH from 02-cleansed_Inc",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Execute Load DWH 02a-processed",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Execute Load DWH 02-cleansed",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "01 Load DWH from 02a-processed",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
