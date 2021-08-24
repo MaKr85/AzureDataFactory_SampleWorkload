@@ -1831,7 +1831,7 @@
 							"storedProcedureParameters": {
 								"AreDatesPrinted": {
 									"value": "0",
-									"type": "Boolean"
+									"type": "Int32"
 								},
 								"AverageNumberOfCustomerOrdersPerDay": {
 									"value": "100",
@@ -1839,7 +1839,7 @@
 								},
 								"IsSilentMode": {
 									"value": "1",
-									"type": "Boolean"
+									"type": "Int32"
 								},
 								"SaturdayPercentageOfNormalWorkDay": {
 									"value": "40",

@@ -1,0 +1,133 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "dp-datafactory-mkr-tst"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/Master_LoadLake')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute - Load 02-cleansed",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute - Load 01-raw",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Iterate CSV Cleansing",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Execute - Load 02a-processed",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "Execute - Load 02-cleansed",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Master_Load_02a-processed",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "Execute - Load 01-raw",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "PopulateDataToCurrentDate",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Master_Load_01-raw",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true
+						}
+					},
+					{
+						"name": "PopulateDataToCurrentDate",
+						"type": "SqlServerStoredProcedure",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"storedProcedureName": "[[DataLoadSimulation].[PopulateDataToCurrentDate]",
+							"storedProcedureParameters": {
+								"AreDatesPrinted": {
+									"value": "0",
+									"type": "Int32"
+								},
+								"AverageNumberOfCustomerOrdersPerDay": {
+									"value": "100",
+									"type": "Int32"
+								},
+								"IsSilentMode": {
+									"value": "1",
+									"type": "Int32"
+								},
+								"SaturdayPercentageOfNormalWorkDay": {
+									"value": "40",
+									"type": "Int32"
+								},
+								"SundayPercentageOfNormalWorkDay": {
+									"value": "20",
+									"type": "Int32"
+								}
+							}
+						},
+						"linkedServiceName": {
+							"referenceName": "external_sql",
+							"type": "LinkedServiceReference"
+						}
+					}
+				],
+				"folder": {
+					"name": "00-Master/01-Submaster"
+				},
+				"annotations": [],
+				"lastPublishTime": "2021-08-23T10:30:32Z"
+			},
+			"dependsOn": []
+		}
+	]
+}
