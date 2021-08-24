@@ -31,6 +31,9 @@
 		},
 		"dpstoragetstmkr_properties_typeProperties_url": {
 			"value": "https://dpstoragetstmkr.dfs.core.windows.net"
+		},
+		"DailyTrigger_properties_Master_LoadAll_parameters_FullLoad": {
+			"value": false
 		}
 	}
 }

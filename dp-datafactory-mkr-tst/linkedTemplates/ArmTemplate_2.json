@@ -6,6 +6,10 @@
 			"type": "string",
 			"metadata": "Data Factory name",
 			"defaultValue": "dp-datafactory-mkr-tst"
+		},
+		"DailyTrigger_properties_Master_LoadAll_parameters_FullLoad": {
+			"type": "bool",
+			"defaultValue": false
 		}
 	},
 	"variables": {
@@ -690,10 +694,12 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "Master_LoadLake",
+							"referenceName": "Master_LoadAll",
 							"type": "PipelineReference"
 						},
-						"parameters": {}
+						"parameters": {
+							"FullLoad": "[parameters('DailyTrigger_properties_Master_LoadAll_parameters_FullLoad')]"
+						}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -709,14 +715,14 @@
 								0
 							],
 							"hours": [
-								8
+								7
 							]
 						}
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/Master_LoadLake')]"
+				"[concat(variables('factoryId'), '/pipelines/Master_LoadAll')]"
 			]
 		}
 	]

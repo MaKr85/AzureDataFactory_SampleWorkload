@@ -42,6 +42,10 @@
 		"dpstoragetstmkr_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://dpstoragetstmkr.dfs.core.windows.net"
+		},
+		"DailyTrigger_properties_Master_LoadAll_parameters_FullLoad": {
+			"type": "bool",
+			"defaultValue": false
 		}
 	},
 	"variables": {
@@ -3323,10 +3327,12 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "Master_LoadLake",
+							"referenceName": "Master_LoadAll",
 							"type": "PipelineReference"
 						},
-						"parameters": {}
+						"parameters": {
+							"FullLoad": "[parameters('DailyTrigger_properties_Master_LoadAll_parameters_FullLoad')]"
+						}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -3342,14 +3348,14 @@
 								0
 							],
 							"hours": [
-								8
+								7
 							]
 						}
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/Master_LoadLake')]"
+				"[concat(variables('factoryId'), '/pipelines/Master_LoadAll')]"
 			]
 		}
 	]
