@@ -14,7 +14,7 @@
 			"location": {
 				"type": "AzureBlobFSLocation",
 				"fileName": {
-					"value": "@concat('exchangeratesAPI','_',formatDateTime(utcnow(),'yyyy'),'_',formatDateTime(utcnow(),'MM'),'_',formatDateTime(utcnow(),'dd'),'.csv')",
+					"value": "@concat('exchangerates','.csv')",
 					"type": "Expression"
 				},
 				"folderPath": {
