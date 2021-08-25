@@ -1,0 +1,12 @@
+{
+	"name": "MarvelAPI",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://gateway.marvel.com:443/v1/public/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
