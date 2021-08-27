@@ -5,6 +5,9 @@
 			"referenceName": "DWH",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Load DWH"
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": []
