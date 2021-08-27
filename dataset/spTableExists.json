@@ -1,0 +1,12 @@
+{
+	"name": "spTableExists",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DWH",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": []
+	}
+}

@@ -57,79 +57,8 @@
 					},
 					"activities": [
 						{
-							"name": "MERGE DATA",
-							"type": "SqlServerStoredProcedure",
-							"dependsOn": [
-								{
-									"activity": "Copy to tmp",
-									"dependencyConditions": [
-										"Succeeded"
-									]
-								}
-							],
-							"policy": {
-								"timeout": "7.00:00:00",
-								"retry": 0,
-								"retryIntervalInSeconds": 30,
-								"secureOutput": false,
-								"secureInput": false
-							},
-							"userProperties": [],
-							"typeProperties": {
-								"storedProcedureName": "[stage].[spMergeData]",
-								"storedProcedureParameters": {
-									"Debug": {
-										"value": null,
-										"type": "String"
-									},
-									"SrcDatabase": {
-										"value": "DWH",
-										"type": "String"
-									},
-									"SrcSchema": {
-										"value": "tmp",
-										"type": "String"
-									},
-									"SrcTable": {
-										"value": {
-											"value": "@replace(item().name,'_cleansed.csv','')",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"TgtDatabase": {
-										"value": "DWH",
-										"type": "String"
-									},
-									"TgtSchema": {
-										"value": "stage",
-										"type": "String"
-									},
-									"TgtTable": {
-										"value": {
-											"value": "@replace(item().name,'_cleansed.csv','')",
-											"type": "Expression"
-										},
-										"type": "String"
-									},
-									"WhereClause": {
-										"value": null,
-										"type": "String"
-									},
-									"DropSrcTable": {
-										"value": "Y",
-										"type": "String"
-									}
-								}
-							},
-							"linkedServiceName": {
-								"referenceName": "DWH",
-								"type": "LinkedServiceReference"
-							}
-						},
-						{
-							"name": "Copy to tmp",
-							"type": "Copy",
+							"name": "Check if Table exists",
+							"type": "Lookup",
 							"dependsOn": [],
 							"policy": {
 								"timeout": "7.00:00:00",
@@ -141,59 +70,340 @@
 							"userProperties": [],
 							"typeProperties": {
 								"source": {
-									"type": "DelimitedTextSource",
-									"storeSettings": {
-										"type": "AzureBlobFSReadSettings",
-										"recursive": true,
-										"enablePartitionDiscovery": false
-									},
-									"formatSettings": {
-										"type": "DelimitedTextReadSettings"
-									}
-								},
-								"sink": {
-									"type": "AzureSqlSink",
-									"tableOption": "autoCreate",
-									"disableMetricsCollection": false
-								},
-								"enableStaging": false,
-								"translator": {
-									"type": "TabularTranslator",
-									"typeConversion": true,
-									"typeConversionSettings": {
-										"allowDataTruncation": true,
-										"treatBooleanAsNumber": false
-									}
-								}
-							},
-							"inputs": [
-								{
-									"referenceName": "source_02cleansed",
-									"type": "DatasetReference",
-									"parameters": {
-										"directory": {
-											"value": "@pipeline().parameters.directory",
-											"type": "Expression"
+									"type": "AzureSqlSource",
+									"sqlReaderStoredProcedureName": "[stage].[spCheckTableExistence]",
+									"storedProcedureParameters": {
+										"SchemaName": {
+											"type": "String",
+											"value": "stage"
 										},
-										"fileName": {
-											"value": "@item().name",
-											"type": "Expression"
+										"TableName": {
+											"type": "String",
+											"value": "@replace(item().name,'_cleansed.csv','')"
 										}
-									}
+									},
+									"queryTimeout": "02:00:00",
+									"partitionOption": "None"
+								},
+								"dataset": {
+									"referenceName": "spTableExists",
+									"type": "DatasetReference"
+								},
+								"firstRowOnly": false
+							}
+						},
+						{
+							"name": "If Table Exists",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "Check if Table exists",
+									"dependencyConditions": [
+										"Succeeded"
+									]
 								}
 							],
-							"outputs": [
-								{
-									"referenceName": "sink_DWH_tmp",
-									"type": "DatasetReference",
-									"parameters": {
-										"TableName": {
-											"value": "@replace(item().name,'_cleansed.csv','')",
-											"type": "Expression"
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@activity('Check if Table exists').output.value > 0",
+									"type": "Expression"
+								},
+								"ifFalseActivities": [
+									{
+										"name": "Get PreSQLScript",
+										"type": "Lookup",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"dataset": {
+												"referenceName": "source_PreSQLScript",
+												"type": "DatasetReference",
+												"parameters": {
+													"directory": {
+														"value": "@pipeline().parameters.directory",
+														"type": "Expression"
+													},
+													"FileName": {
+														"value": "@replace(item().name,'_cleansed.csv','_SQL.txt')",
+														"type": "Expression"
+													}
+												}
+											},
+											"firstRowOnly": false
+										}
+									},
+									{
+										"name": "CREATE TABLE",
+										"type": "SqlServerStoredProcedure",
+										"dependsOn": [
+											{
+												"activity": "Get PreSQLScript",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"storedProcedureName": "[stage].[spExecuteSQLCmd]",
+											"storedProcedureParameters": {
+												"SqlJSON": {
+													"value": {
+														"value": "@{activity('Get PreSQLScript').output.value}",
+														"type": "Expression"
+													},
+													"type": "String"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "DWH",
+											"type": "LinkedServiceReference"
+										}
+									},
+									{
+										"name": "Copy2DWH_STAGE",
+										"type": "Copy",
+										"dependsOn": [
+											{
+												"activity": "CREATE TABLE",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "AzureSqlSink",
+												"disableMetricsCollection": false
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "source_02cleansed",
+												"type": "DatasetReference",
+												"parameters": {
+													"directory": {
+														"value": "@pipeline().parameters.directory",
+														"type": "Expression"
+													},
+													"fileName": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "sink_DWH_Stage",
+												"type": "DatasetReference",
+												"parameters": {
+													"TableName": {
+														"value": "@replace(item().name,'_cleansed.csv','')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									}
+								],
+								"ifTrueActivities": [
+									{
+										"name": "Copy to tmp",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "DelimitedTextSource",
+												"storeSettings": {
+													"type": "AzureBlobFSReadSettings",
+													"recursive": true,
+													"enablePartitionDiscovery": false
+												},
+												"formatSettings": {
+													"type": "DelimitedTextReadSettings"
+												}
+											},
+											"sink": {
+												"type": "AzureSqlSink",
+												"tableOption": "autoCreate",
+												"disableMetricsCollection": false
+											},
+											"enableStaging": false,
+											"translator": {
+												"type": "TabularTranslator",
+												"typeConversion": true,
+												"typeConversionSettings": {
+													"allowDataTruncation": true,
+													"treatBooleanAsNumber": false
+												}
+											}
+										},
+										"inputs": [
+											{
+												"referenceName": "source_02cleansed",
+												"type": "DatasetReference",
+												"parameters": {
+													"directory": {
+														"value": "@pipeline().parameters.directory",
+														"type": "Expression"
+													},
+													"fileName": {
+														"value": "@item().name",
+														"type": "Expression"
+													}
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "sink_DWH_tmp",
+												"type": "DatasetReference",
+												"parameters": {
+													"TableName": {
+														"value": "@replace(item().name,'_cleansed.csv','')",
+														"type": "Expression"
+													}
+												}
+											}
+										]
+									},
+									{
+										"name": "MERGE DATA",
+										"type": "SqlServerStoredProcedure",
+										"dependsOn": [
+											{
+												"activity": "Copy to tmp",
+												"dependencyConditions": [
+													"Succeeded"
+												]
+											}
+										],
+										"policy": {
+											"timeout": "7.00:00:00",
+											"retry": 0,
+											"retryIntervalInSeconds": 30,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"storedProcedureName": "[stage].[spMergeData]",
+											"storedProcedureParameters": {
+												"Debug": {
+													"value": null,
+													"type": "String"
+												},
+												"SrcDatabase": {
+													"value": "DWH",
+													"type": "String"
+												},
+												"SrcSchema": {
+													"value": "tmp",
+													"type": "String"
+												},
+												"SrcTable": {
+													"value": {
+														"value": "@replace(item().name,'_cleansed.csv','')",
+														"type": "Expression"
+													},
+													"type": "String"
+												},
+												"TgtDatabase": {
+													"value": "DWH",
+													"type": "String"
+												},
+												"TgtSchema": {
+													"value": "stage",
+													"type": "String"
+												},
+												"TgtTable": {
+													"value": {
+														"value": "@replace(item().name,'_cleansed.csv','')",
+														"type": "Expression"
+													},
+													"type": "String"
+												},
+												"WhereClause": {
+													"value": null,
+													"type": "String"
+												},
+												"DropSrcTable": {
+													"value": "Y",
+													"type": "String"
+												}
+											}
+										},
+										"linkedServiceName": {
+											"referenceName": "DWH",
+											"type": "LinkedServiceReference"
 										}
 									}
-								}
-							]
+								]
+							}
 						}
 					]
 				}
@@ -202,6 +412,12 @@
 		"parameters": {
 			"directory": {
 				"type": "string"
+			}
+		},
+		"variables": {
+			"TableExists": {
+				"type": "Boolean",
+				"defaultValue": "True"
 			}
 		},
 		"folder": {
