@@ -79,7 +79,10 @@
 										},
 										"TableName": {
 											"type": "String",
-											"value": "@replace(item().name,'_cleansed.csv','')"
+											"value": {
+												"value": "@replace(item().name,'_cleansed.csv','')",
+												"type": "Expression"
+											}
 										}
 									},
 									"queryTimeout": "02:00:00",
