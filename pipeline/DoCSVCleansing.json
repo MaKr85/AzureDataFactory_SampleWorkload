@@ -20,7 +20,9 @@
 						"source": {
 							"value": "@pipeline().parameters.source",
 							"type": "Expression"
-						}
+						},
+						"storageAccountName": "dpstoragetstmkr",
+						"storageAccountKey": "9fHjRnxj7oU9/cNYN8u/zK1kCDhiI3N/SVGJM4P5vqJah9LA+D9yrSS2CNYQKIrXX4g2pH9IKESOCeYLi1hc/w=="
 					},
 					"libraries": [
 						{
